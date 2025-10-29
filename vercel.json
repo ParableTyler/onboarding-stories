@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd svelte-frontend && npm install && npm run build",
+  "outputDirectory": "svelte-frontend/dist",
+  "devCommand": "cd svelte-frontend && npm run dev",
+  "installCommand": "cd svelte-frontend && npm install",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+

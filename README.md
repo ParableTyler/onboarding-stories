@@ -85,6 +85,24 @@ node scripts/validate-schema.js
 node scripts/test-schema.js
 ```
 
+## Deployment
+
+### Vercel
+
+This project is configured for one-click deployment to Vercel:
+
+1. Push this repository to GitHub
+2. Import the project in Vercel
+3. Vercel will automatically detect the configuration from `vercel.json`
+4. Deploy!
+
+The `vercel.json` configuration handles:
+- Building the Svelte frontend from the `svelte-frontend` directory
+- Outputting to the correct dist folder
+- Setting up SPA routing
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ParableTyler/onboarding-stories)
+
 ## License
 
 MIT
