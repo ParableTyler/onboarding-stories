@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PP Editorial New Font (Headers) */
+@font-face {
+  font-family: 'PP Editorial New';
+  src: url('./assets/fonts/PPEditorialNew-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Fraktion Sans Font (Body) */
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('./assets/fonts/PPFraktionSans-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('./assets/fonts/PPFraktionSans-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  font-family: 'PP Fraktion Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 300;
+  
+  color-scheme: light dark;
+  color: rgba(17, 24, 39, 1);
+  background-color: rgba(249, 250, 251, 1);
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply PP Editorial New to all headers */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'PP Editorial New', serif;
+  font-weight: 400;
+}
+
+/* Apply PP Fraktion Sans to body */
+body {
+  font-family: 'PP Fraktion Sans', sans-serif;
+  font-weight: 300;
+}
+
+/* Bold text uses PP Fraktion Sans Bold */
+b, strong, .font-bold, .font-semibold {
+  font-weight: 700;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgba(249, 250, 251, 1);
+    background-color: rgba(17, 24, 39, 1);
+  }
+}
+
+/* Chat typing animation */
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Rapid blinking animation for prioritized cards */
+@keyframes ping-fast {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-ping-fast {
+  animation: ping-fast 0.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+

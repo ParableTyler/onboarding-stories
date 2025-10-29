@@ -1,0 +1,674 @@
+# ============================================================================
+# Core Scalar Types for Integration Forms
+# ============================================================================
+
+"""
+Secret credential value that should be masked in UI and write-only
+"""
+scalar Secret @specMetadata(
+  typescript: "string"
+  python: "str"
+  validation: "writeOnly"
+  uiHint: "password"
+)
+
+"""
+Email address with RFC 5322 validation
+"""
+scalar Email @specMetadata(
+  typescript: "string"
+  python: "str"
+  pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+  example: "admin@company.com"
+)
+
+"""
+URL with format validation
+"""
+scalar URL @specMetadata(
+  typescript: "string"
+  python: "str"
+  format: "uri"
+  example: "https://api.salesforce.com"
+)
+
+"""
+Hostname with pattern validation (subdomain style)
+"""
+scalar Hostname @specMetadata(
+  typescript: "string"
+  python: "str"
+  pattern: "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$"
+  example: "my-tenant.salesforce.com"
+)
+
+"""
+ISO 8601 date (without time)
+"""
+scalar Date @specMetadata(
+  typescript: "string"
+  python: "date"
+  format: "date"
+  example: "2025-01-15"
+)
+
+"""
+File upload with base64 encoding and content type
+"""
+scalar File @specMetadata(
+  typescript: "{ data: string; contentType: string; filename: string }"
+  python: "FileUpload"
+  contentMediaType: "application/json"
+)
+
+# ============================================================================
+# Field Type Enums
+# ============================================================================
+
+"""
+UI widget types for form rendering
+"""
+enum FieldWidgetType {
+  TEXT_INPUT
+  TEXTAREA
+  PASSWORD
+  EMAIL_INPUT
+  URL_INPUT
+  HOSTNAME_INPUT
+  SELECT
+  RADIO
+  MULTISELECT
+  CHECKBOX
+  TOGGLE
+  DATE_PICKER
+  FILE_UPLOAD
+  MARKDOWN_DISPLAY
+}
+
+"""
+Field validation modes
+"""
+enum FieldMode {
+  READ_ONLY
+  WRITE_ONLY
+  READ_WRITE
+}
+
+# ============================================================================
+# Form Field Definitions
+# ============================================================================
+
+"""
+Base interface for all form fields
+"""
+interface IFormField {
+  """Unique identifier for this field"""
+  id: ID!
+  
+  """Field key used in data payload"""
+  key: String!
+  
+  """Human-readable label"""
+  label: String!
+  
+  """Help text / description"""
+  description: String
+  
+  """Whether this field is required"""
+  required: Boolean!
+  
+  """UI widget type"""
+  widget: FieldWidgetType!
+  
+  """Field mode (read-only, write-only, read-write)"""
+  mode: FieldMode!
+  
+  """Default value (as JSON)"""
+  defaultValue: String
+  
+  """Validation rules (as JSON)"""
+  validation: String
+  
+  """Placeholder text"""
+  placeholder: String
+}
+
+"""
+String field
+"""
+type StringField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Min length validation"""
+  minLength: Int
+  
+  """Max length validation"""
+  maxLength: Int
+  
+  """Regex pattern validation"""
+  pattern: String
+}
+
+"""
+Secret/password field (masked in UI, write-only)
+"""
+type SecretField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Whether to show a "reveal" button"""
+  revealable: Boolean!
+}
+
+"""
+Email field with RFC 5322 validation
+"""
+type EmailField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+}
+
+"""
+URL field with format validation
+"""
+type URLField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+}
+
+"""
+Hostname field with pattern validation
+"""
+type HostnameField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+}
+
+"""
+Select/dropdown field (single selection)
+"""
+type SelectField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Available options"""
+  options: [SelectOption!]!
+  
+  """Whether to allow custom values"""
+  allowCustom: Boolean!
+}
+
+"""
+Multi-select field (multiple selections)
+"""
+type MultiSelectField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Available options"""
+  options: [SelectOption!]!
+  
+  """Minimum selections required"""
+  minSelections: Int
+  
+  """Maximum selections allowed"""
+  maxSelections: Int
+}
+
+"""
+Boolean/toggle field
+"""
+type BooleanField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+}
+
+"""
+Array field (list of strings/emails)
+"""
+type ArrayField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Type of items in array"""
+  itemType: String!
+  
+  """Min items required"""
+  minItems: Int
+  
+  """Max items allowed"""
+  maxItems: Int
+}
+
+"""
+Date field (ISO 8601 date)
+"""
+type DateField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Minimum date allowed"""
+  minDate: Date
+  
+  """Maximum date allowed"""
+  maxDate: Date
+}
+
+"""
+File upload field
+"""
+type FileField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Accepted content types"""
+  acceptedTypes: [String!]!
+  
+  """Max file size in bytes"""
+  maxSize: Int
+}
+
+"""
+Markdown display field (read-only, for documentation)
+"""
+type MarkdownField implements IFormField {
+  id: ID!
+  key: String!
+  label: String!
+  description: String
+  required: Boolean!
+  widget: FieldWidgetType!
+  mode: FieldMode!
+  defaultValue: String
+  validation: String
+  placeholder: String
+  
+  """Markdown content to display"""
+  content: String!
+}
+
+"""
+Option for select/multiselect fields
+"""
+type SelectOption {
+  """Option value"""
+  value: String!
+  
+  """Display label"""
+  label: String!
+  
+  """Optional description"""
+  description: String
+}
+
+"""
+Union type for all possible form fields
+"""
+union FormField = 
+  StringField | 
+  SecretField | 
+  EmailField | 
+  URLField | 
+  HostnameField | 
+  SelectField | 
+  MultiSelectField | 
+  BooleanField | 
+  ArrayField | 
+  DateField | 
+  FileField | 
+  MarkdownField
+
+# ============================================================================
+# Test Configuration
+# ============================================================================
+
+"""
+How to test a connection for this variant
+"""
+type TestConfig {
+  """Unique identifier"""
+  id: ID!
+  
+  """Test method type"""
+  method: TestMethod!
+  
+  """Endpoint to test (can use field values via ${fieldKey})"""
+  endpoint: String
+  
+  """Expected response indicators"""
+  expectedResponse: ExpectedResponse!
+  
+  """Timeout in milliseconds"""
+  timeoutMs: Int!
+  
+  """Custom test script (if method is CUSTOM)"""
+  customScript: String
+}
+
+"""
+Test method types
+"""
+enum TestMethod {
+  """Make an HTTP GET request"""
+  HTTP_GET
+  
+  """Make an HTTP POST request"""
+  HTTP_POST
+  
+  """Execute custom validation script"""
+  CUSTOM
+  
+  """Validate credentials format only"""
+  VALIDATE_FORMAT
+}
+
+"""
+Expected response validation
+"""
+type ExpectedResponse {
+  """Expected HTTP status code"""
+  statusCode: Int
+  
+  """Expected response body pattern (regex)"""
+  bodyPattern: String
+  
+  """Expected response headers"""
+  headers: String
+  
+  """Success message to show user"""
+  successMessage: String!
+  
+  """Failure message to show user"""
+  failureMessage: String!
+}
+
+# ============================================================================
+# Plugin Variant & Plugin
+# ============================================================================
+
+"""
+Authentication/configuration method for a plugin
+"""
+enum AuthMethod {
+  API_KEY
+  OAUTH2
+  BASIC_AUTH
+  SERVICE_ACCOUNT
+  TOKEN
+  USERNAME_PASSWORD
+}
+
+"""
+A specific authentication variant for a plugin
+"""
+type PluginVariant {
+  """Unique identifier"""
+  id: ID!
+  
+  """Variant name (e.g., "OAuth 2.0", "API Key")"""
+  name: String!
+  
+  """Short description"""
+  description: String
+  
+  """Authentication method"""
+  authMethod: AuthMethod!
+  
+  """Form fields for this variant"""
+  formFields: [FormField!]!
+  
+  """Test configuration"""
+  testConfig: TestConfig!
+  
+  """Link to markdown documentation"""
+  documentationPath: String!
+  
+  """Whether this is the recommended variant"""
+  recommended: Boolean!
+  
+  """Icon for this variant (optional)"""
+  icon: String
+}
+
+"""
+Integration plugin/connector
+"""
+type Plugin {
+  """Unique identifier"""
+  id: ID!
+  
+  """Plugin slug (e.g., "salesforce", "google-workspace")"""
+  slug: String!
+  
+  """Display name"""
+  name: String!
+  
+  """Short description"""
+  description: String!
+  
+  """Plugin icon/logo URL"""
+  icon: String
+  
+  """Category (e.g., "CRM", "Storage", "Analytics")"""
+  category: String!
+  
+  """Available variants for this plugin"""
+  variants: [PluginVariant!]!
+  
+  """Link to main markdown documentation"""
+  documentationPath: String!
+  
+  """Support/help URL"""
+  supportUrl: URL
+  
+  """Whether plugin is currently available"""
+  enabled: Boolean!
+}
+
+# ============================================================================
+# Query & Mutation Interfaces
+# ============================================================================
+
+type Query {
+  """Get all available plugins"""
+  plugins(
+    """Filter by category"""
+    category: String
+    
+    """Filter by enabled status"""
+    enabled: Boolean
+  ): [Plugin!]!
+  
+  """Get a specific plugin by ID"""
+  plugin(id: ID!): Plugin
+  
+  """Get a specific plugin by slug"""
+  pluginBySlug(slug: String!): Plugin
+  
+  """Get a specific variant"""
+  variant(id: ID!): PluginVariant
+}
+
+"""
+Input for creating/updating plugin configuration
+"""
+input PluginConfigInput {
+  """Plugin ID"""
+  pluginId: ID!
+  
+  """Variant ID"""
+  variantId: ID!
+  
+  """Configuration values (as JSON string)"""
+  config: String!
+  
+  """Optional friendly name for this config"""
+  name: String
+}
+
+type Mutation {
+  """Create a new plugin configuration"""
+  createPluginConfig(input: PluginConfigInput!): PluginConfigResult!
+  
+  """Test a plugin configuration"""
+  testPluginConfig(input: PluginConfigInput!): TestResult!
+  
+  """Update an existing plugin configuration"""
+  updatePluginConfig(id: ID!, input: PluginConfigInput!): PluginConfigResult!
+  
+  """Delete a plugin configuration"""
+  deletePluginConfig(id: ID!): Boolean!
+}
+
+"""
+Result of creating/updating a plugin configuration
+"""
+type PluginConfigResult {
+  """Success status"""
+  success: Boolean!
+  
+  """Configuration ID"""
+  id: ID
+  
+  """Error message if failed"""
+  error: String
+  
+  """The created/updated configuration"""
+  config: PluginConfig
+}
+
+"""
+Result of testing a plugin configuration
+"""
+type TestResult {
+  """Test success status"""
+  success: Boolean!
+  
+  """Success/failure message"""
+  message: String!
+  
+  """Detailed test output"""
+  details: String
+  
+  """Duration in milliseconds"""
+  durationMs: Int!
+}
+
+"""
+Stored plugin configuration
+"""
+type PluginConfig {
+  """Configuration ID"""
+  id: ID!
+  
+  """Associated plugin"""
+  plugin: Plugin!
+  
+  """Associated variant"""
+  variant: PluginVariant!
+  
+  """Friendly name"""
+  name: String
+  
+  """Configuration values (secrets masked)"""
+  config: String!
+  
+  """Creation timestamp"""
+  createdAt: String!
+  
+  """Last update timestamp"""
+  updatedAt: String!
+  
+  """Last test result"""
+  lastTestResult: TestResult
+}
+
