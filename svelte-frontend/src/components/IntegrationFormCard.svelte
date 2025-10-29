@@ -7,7 +7,7 @@
   import AddIntegratorsDialog from './AddIntegratorsDialog.svelte';
   import { formData, validationErrors, connectionInstances, activeInstanceId } from '../stores/connectorStore';
   import { formatDaysRemaining, formatDaysConnected, formatNextNudge, isOverdue, isDueSoon } from '../utils/dateUtils';
-  import { organizations } from '../data/organizations';
+  import { tenants } from '../data/tenants';
   
   export let connector: Connector;
   
@@ -18,8 +18,8 @@
   let ponderTab: 'chat' | 'documentation' = 'chat';
   let isIntegratorsDialogOpen = false;
   
-  // Get the current organization's users for the dialog
-  const currentOrg = organizations[0]; // In production, this would be the current user's org
+  // Get the current tenant's users for the dialog
+  const currentTenant = tenants[0]; // In production, this would be the current user's tenant
   
   $: activeVariant = connector.variants.find(v => v.id === activeTab);
   $: activeInstance = $activeInstanceId ? 
@@ -303,7 +303,7 @@
 <!-- Add Integrators Dialog -->
 <AddIntegratorsDialog
   bind:isOpen={isIntegratorsDialogOpen}
-  availableUsers={currentOrg.users}
+  availableUsers={currentTenant.users}
   currentIntegrators={connector.priorityNotifyUsers || []}
   on:close={() => isIntegratorsDialogOpen = false}
   on:save={handleIntegratorsSave}

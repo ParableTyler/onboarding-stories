@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { NotifyUser } from '../types';
-  import type { OrganizationUser } from '../data/organizations';
+  import type { TenantUser } from '../data/tenants';
   
   export let isOpen = false;
-  export let availableUsers: OrganizationUser[] = [];
+  export let availableUsers: TenantUser[] = [];
   export let currentIntegrators: NotifyUser[] = [];
   
   const dispatch = createEventDispatcher<{
@@ -15,7 +15,7 @@
   // Local state for managing selected integrators
   let selectedIntegrators: NotifyUser[] = [...currentIntegrators];
   let searchQuery = '';
-  let selectedUser: OrganizationUser | null = null;
+  let selectedUser: TenantUser | null = null;
   let selectedRole: 'accountable' | 'informed' = 'accountable';
   
   // Filter out already added users

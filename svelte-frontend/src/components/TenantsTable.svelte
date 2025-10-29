@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Tabs } from 'bits-ui';
-  import { organizations } from '../data/organizations';
+  import { tenants } from '../data/tenants';
   import { connectors } from '../data/connectors';
-  import type { Organization, OrganizationUser, OrganizationPlugin } from '../data/organizations';
+  import type { Tenant, TenantUser, TenantPlugin } from '../data/tenants';
   import { getTimeAgo, formatDateTime } from '../utils/timeUtils';
   import { formatNextNudge } from '../utils/dateUtils';
   
@@ -11,15 +11,15 @@
   let activeTab: Record<string, string> = {};
   let userSearchQuery: Record<string, string> = {};
   let pluginSearchQuery: Record<string, string> = {};
-  let localOrganizations = [...organizations];
+  let localTenants = [...tenants];
   let showDueDateModal = false;
-  let selectedDueDatePlugin: { orgId: string; pluginId: string; pluginName: string } | null = null;
+  let selectedDueDatePlugin: { tenantId: string; pluginId: string; pluginName: string } | null = null;
   let dueDateValue = '';
   let applyToAllPlugins = true;
-  let showAddOrgModal = false;
-  let newOrgName = '';
-  let newOrgWebsite = '';
-  let newOrgSlug = '';
+  let showAddTenantModal = false;
+  let newTenantName = '';
+  let newTenantWebsite = '';
+  let newTenantSlug = '';
   let showDeleteConfirm: string | null = null;
   let deleteConfirmText = '';
   let logoPreviewUrl = '';
@@ -30,21 +30,21 @@
   let newUserJobTitle = '';
   let newUserParableRole: 'sponsor' | 'integrator' | 'project-manager' = 'integrator';
   let showEditUserModal = false;
-  let editingUser: { orgId: string; user: OrganizationUser } | null = null;
+  let editingUser: { tenantId: string; user: TenantUser } | null = null;
   
-  // Cache for random connector icons per organization
-  let orgConnectorIcons: Record<string, { prioritized: string[], active: string[] }> = {};
+  // Cache for random connector icons per tenant
+  let tenantConnectorIcons: Record<string, { prioritized: string[], active: string[] }> = {};
   
   // Function to get random connector icons for display
-  function getRandomConnectorIcons(orgId: string, count: number, type: 'prioritized' | 'active'): string[] {
-    // Initialize cache for this org if it doesn't exist
-    if (!orgConnectorIcons[orgId]) {
-      orgConnectorIcons[orgId] = { prioritized: [], active: [] };
+  function getRandomConnectorIcons(tenantId: string, count: number, type: 'prioritized' | 'active'): string[] {
+    // Initialize cache for this tenant if it doesn't exist
+    if (!tenantConnectorIcons[tenantId]) {
+      tenantConnectorIcons[tenantId] = { prioritized: [], active: [] };
     }
     
     // Return cached icons if they exist
-    if (orgConnectorIcons[orgId][type].length > 0) {
-      return orgConnectorIcons[orgId][type];
+    if (tenantConnectorIcons[tenantId][type].length > 0) {
+      return tenantConnectorIcons[tenantId][type];
     }
     
     // Generate new random selection
@@ -52,44 +52,44 @@
     const selected = shuffled.slice(0, Math.min(count, 5)).map(c => c.icon); // Max 5 icons
     
     // Cache the selection
-    orgConnectorIcons[orgId][type] = selected;
+    tenantConnectorIcons[tenantId][type] = selected;
     return selected;
   }
   
-  $: filteredOrgs = localOrganizations.filter(org => 
-    org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    org.domain.toLowerCase().includes(searchQuery.toLowerCase())
+  $: filteredOrgs = localTenants.filter(tenant => 
+    tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tenant.domain.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  function toggleOrg(orgId: string) {
-    if (expandedOrg === orgId) {
+  function toggleOrg(tenantId: string) {
+    if (expandedOrg === tenantId) {
       expandedOrg = null;
     } else {
-      expandedOrg = orgId;
-      if (!activeTab[orgId]) {
-        activeTab[orgId] = 'users';
+      expandedOrg = tenantId;
+      if (!activeTab[tenantId]) {
+        activeTab[tenantId] = 'users';
       }
     }
   }
   
-  function updateUserRole(orgId: string, userEmail: string, newRole: string) {
-    localOrganizations = localOrganizations.map(org => {
-      if (org.id === orgId) {
+  function updateUserRole(tenantId: string, userEmail: string, newRole: string) {
+    localTenants = localTenants.map(tenant => {
+      if (tenant.id === tenantId) {
         return {
-          ...org,
-          users: org.users.map(user => 
+          ...tenant,
+          users: tenant.users.map(user => 
             user.email === userEmail 
-              ? { ...user, parableRole: newRole as OrganizationUser['parableRole'] }
+              ? { ...user, parableRole: newRole as TenantUser['parableRole'] }
               : user
           )
         };
       }
-      return org;
+      return tenant;
     });
     console.log(`Autosaved role for ${userEmail} to ${newRole}`);
   }
   
-  function getRoleBadgeColor(role: OrganizationUser['parableRole']): string {
+  function getRoleBadgeColor(role: TenantUser['parableRole']): string {
     switch (role) {
       case 'sponsor':
         return 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300';
@@ -100,33 +100,33 @@
     }
   }
   
-  function togglePrioritize(orgId: string, pluginId: string) {
-    localOrganizations = localOrganizations.map(org => {
-      if (org.id === orgId) {
-        const updatedPlugins = org.plugins.map(plugin => 
+  function togglePrioritize(tenantId: string, pluginId: string) {
+    localTenants = localTenants.map(tenant => {
+      if (tenant.id === tenantId) {
+        const updatedPlugins = tenant.plugins.map(plugin => 
           plugin.id === pluginId 
             ? { ...plugin, prioritized: !plugin.prioritized }
             : plugin
         );
         const prioritizedCount = updatedPlugins.filter(p => p.prioritized).length;
         return {
-          ...org,
+          ...tenant,
           plugins: updatedPlugins,
           prioritizedIntegrations: prioritizedCount,
         };
       }
-      return org;
+      return tenant;
     });
-    console.log(`Toggled prioritize for plugin ${pluginId} in org ${orgId}`);
+    console.log(`Toggled prioritize for plugin ${pluginId} in tenant ${tenantId}`);
   }
   
-  function sendNudge(orgName: string, pluginName: string) {
-    console.log(`Sending nudge email for ${pluginName} to ${orgName}`);
-    alert(`Nudge email sent to ${orgName} for ${pluginName} integration!`);
+  function sendNudge(tenantName: string, pluginName: string) {
+    console.log(`Sending nudge email for ${pluginName} to ${tenantName}`);
+    alert(`Nudge email sent to ${tenantName} for ${pluginName} integration!`);
   }
   
-  function openDueDateModal(orgId: string, pluginId: string, pluginName: string) {
-    selectedDueDatePlugin = { orgId, pluginId, pluginName };
+  function openDueDateModal(tenantId: string, pluginId: string, pluginName: string) {
+    selectedDueDatePlugin = { tenantId, pluginId, pluginName };
     showDueDateModal = true;
     dueDateValue = '';
     applyToAllPlugins = true;
@@ -137,9 +137,9 @@
     
     if (applyToAllPlugins) {
       // Apply to all prioritized plugins across all orgs
-      localOrganizations = localOrganizations.map(org => ({
-        ...org,
-        plugins: org.plugins.map(plugin => 
+      localTenants = localTenants.map(tenant => ({
+        ...tenant,
+        plugins: tenant.plugins.map(plugin => 
           plugin.prioritized 
             ? { ...plugin, nextNudgeDate: dueDateValue }
             : plugin
@@ -148,18 +148,18 @@
       console.log(`Applied due date ${dueDateValue} to all prioritized plugins`);
     } else {
       // Apply to single plugin
-      localOrganizations = localOrganizations.map(org => {
-        if (org.id === selectedDueDatePlugin!.orgId) {
+      localTenants = localTenants.map(tenant => {
+        if (tenant.id === selectedDueDatePlugin!.tenantId) {
           return {
-            ...org,
-            plugins: org.plugins.map(plugin => 
+            ...tenant,
+            plugins: tenant.plugins.map(plugin => 
               plugin.id === selectedDueDatePlugin!.pluginId
                 ? { ...plugin, nextNudgeDate: dueDateValue }
                 : plugin
             )
           };
         }
-        return org;
+        return tenant;
       });
       console.log(`Applied due date ${dueDateValue} to ${selectedDueDatePlugin.pluginName}`);
     }
@@ -168,57 +168,57 @@
     selectedDueDatePlugin = null;
   }
   
-  function startOnboarding(orgName: string) {
-    console.log(`Starting onboarding for ${orgName}`);
-    alert(`Onboarding started for ${orgName}!`);
+  function startOnboarding(tenantName: string) {
+    console.log(`Starting onboarding for ${tenantName}`);
+    alert(`Onboarding started for ${tenantName}!`);
   }
   
-  function addOrganization() {
-    if (!newOrgName || !newOrgWebsite || !newOrgSlug) return;
+  function addTenant() {
+    if (!newTenantName || !newTenantWebsite || !newTenantSlug) return;
     
-    const newOrg: Organization = {
-      id: String(localOrganizations.length + 1),
-      name: newOrgName,
-      domain: newOrgWebsite,
+    const newOrg: Tenant = {
+      id: String(localTenants.length + 1),
+      name: newTenantName,
+      domain: newTenantWebsite,
       users: [],
       plugins: [],
       prioritizedIntegrations: 0,
       connectedIntegrations: 0,
     };
     
-    localOrganizations = [...localOrganizations, newOrg];
-    console.log(`Added organization: ${newOrgName}`);
+    localTenants = [...localTenants, newOrg];
+    console.log(`Added tenant: ${newTenantName}`);
     
-    showAddOrgModal = false;
-    newOrgName = '';
-    newOrgWebsite = '';
-    newOrgSlug = '';
+    showAddTenantModal = false;
+    newTenantName = '';
+    newTenantWebsite = '';
+    newTenantSlug = '';
   }
   
-  function confirmDeleteOrg(orgId: string) {
-    showDeleteConfirm = orgId;
+  function confirmDeleteOrg(tenantId: string) {
+    showDeleteConfirm = tenantId;
     deleteConfirmText = '';
   }
   
-  function deleteOrganization(orgId: string, orgName: string) {
-    if (deleteConfirmText !== `DELETE ${orgName.toUpperCase()}`) {
+  function deleteTenant(tenantId: string, tenantName: string) {
+    if (deleteConfirmText !== `DELETE ${tenantName.toUpperCase()}`) {
       alert('Please type the confirmation text exactly as shown');
       return;
     }
     
-    localOrganizations = localOrganizations.filter(org => org.id !== orgId);
-    console.log(`Deleted organization: ${orgName}`);
+    localTenants = localTenants.filter(tenant => tenant.id !== tenantId);
+    console.log(`Deleted tenant: ${tenantName}`);
     showDeleteConfirm = null;
     deleteConfirmText = '';
   }
   
-  $: if (newOrgName) {
-    newOrgSlug = newOrgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  $: if (newTenantName) {
+    newTenantSlug = newTenantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
   
   // Update logo preview when website has a domain
-  $: if (newOrgWebsite && newOrgWebsite.includes('.')) {
-    logoPreviewUrl = `https://img.logo.dev/${newOrgWebsite}?token=pk_N2gy3fJKQ0aldg9QTg7cHA`;
+  $: if (newTenantWebsite && newTenantWebsite.includes('.')) {
+    logoPreviewUrl = `https://img.logo.dev/${newTenantWebsite}?token=pk_N2gy3fJKQ0aldg9QTg7cHA`;
   } else {
     logoPreviewUrl = '';
   }
@@ -228,11 +228,11 @@
     
     const fullName = `${newUserFirstName} ${newUserLastName}`;
     
-    localOrganizations = localOrganizations.map(org => {
-      if (org.id === expandedOrg) {
+    localTenants = localTenants.map(tenant => {
+      if (tenant.id === expandedOrg) {
         return {
-          ...org,
-          users: [...org.users, {
+          ...tenant,
+          users: [...tenant.users, {
             name: fullName,
             email: newUserEmail,
             jobTitle: newUserJobTitle,
@@ -241,7 +241,7 @@
           }]
         };
       }
-      return org;
+      return tenant;
     });
     
     console.log(`Added user: ${fullName}`);
@@ -253,24 +253,24 @@
     newUserParableRole = 'integrator';
   }
   
-  function openEditUser(orgId: string, user: OrganizationUser) {
-    editingUser = { orgId, user };
+  function openEditUser(tenantId: string, user: TenantUser) {
+    editingUser = { tenantId, user };
     showEditUserModal = true;
   }
   
   function saveEditUser() {
     if (!editingUser) return;
     
-    localOrganizations = localOrganizations.map(org => {
-      if (org.id === editingUser!.orgId) {
+    localTenants = localTenants.map(tenant => {
+      if (tenant.id === editingUser!.tenantId) {
         return {
-          ...org,
-          users: org.users.map(u => 
+          ...tenant,
+          users: tenant.users.map(u => 
             u.email === editingUser!.user.email ? editingUser!.user : u
           )
         };
       }
-      return org;
+      return tenant;
     });
     
     console.log(`Updated user: ${editingUser.user.name}`);
@@ -278,19 +278,19 @@
     editingUser = null;
   }
   
-  function getFilteredUsers(org: Organization): OrganizationUser[] {
-    const query = userSearchQuery[org.id] || '';
-    if (!query) return org.users;
-    return org.users.filter(user => 
+  function getFilteredUsers(tenant: Tenant): TenantUser[] {
+    const query = userSearchQuery[tenant.id] || '';
+    if (!query) return tenant.users;
+    return tenant.users.filter(user => 
       user.name.toLowerCase().includes(query.toLowerCase()) ||
       user.email.toLowerCase().includes(query.toLowerCase()) ||
       user.jobTitle.toLowerCase().includes(query.toLowerCase())
     );
   }
   
-  function getFilteredPlugins(org: Organization): OrganizationPlugin[] {
-    const query = pluginSearchQuery[org.id] || '';
-    let filtered = org.plugins;
+  function getFilteredPlugins(tenant: Tenant): TenantPlugin[] {
+    const query = pluginSearchQuery[tenant.id] || '';
+    let filtered = tenant.plugins;
     
     if (query) {
       filtered = filtered.filter(plugin => 
@@ -310,13 +310,13 @@
 </script>
 
 <div class="space-y-4">
-  <!-- Search Bar with Add Organization Button -->
+  <!-- Search Bar with Add Tenant Button -->
   <div class="flex gap-3">
     <div class="relative flex-1">
       <input
         type="text"
         bind:value={searchQuery}
-        placeholder="Search organizations..."
+        placeholder="Search tenants..."
         class="w-full px-4 py-3 pl-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,13 +324,13 @@
       </svg>
     </div>
     <button
-      on:click={() => showAddOrgModal = true}
+      on:click={() => showAddTenantModal = true}
       class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
-      Add Organization
+      Add Tenant
     </button>
   </div>
   
@@ -340,10 +340,10 @@
       <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <tr>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Organization Name
+            Tenant Name
           </th>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Organization Users
+            Tenant Users
           </th>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Prioritized Connectors
@@ -354,38 +354,38 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-        {#each filteredOrgs as org}
+        {#each filteredOrgs as tenant}
           <tr 
             class="group hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-            on:click={() => toggleOrg(org.id)}
+            on:click={() => toggleOrg(tenant.id)}
           >
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <img 
-                  src="https://img.logo.dev/{org.domain}?token=pk_N2gy3fJKQ0aldg9QTg7cHA" 
-                  alt="{org.name} logo" 
+                  src="https://img.logo.dev/{tenant.domain}?token=pk_N2gy3fJKQ0aldg9QTg7cHA" 
+                  alt="{tenant.name} logo" 
                   class="w-10 h-10 rounded-lg object-contain bg-white p-1 border border-gray-200"
                   on:error={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(org.name)}&background=random&size=128`;
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tenant.name)}&background=random&size=128`;
                   }}
                 />
                 <div>
-                  <div class="font-medium text-gray-900 dark:text-white">{org.name}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">{org.domain}</div>
+                  <div class="font-medium text-gray-900 dark:text-white">{tenant.name}</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">{tenant.domain}</div>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4 text-gray-900 dark:text-white">
-              {org.users.length}
+              {tenant.users.length}
             </td>
             <td class="px-6 py-4">
-              {#if org.prioritizedIntegrations > 0}
+              {#if tenant.prioritizedIntegrations > 0}
                 <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300">
-                  {org.prioritizedIntegrations}
+                  {tenant.prioritizedIntegrations}
                 </span>
                   <div class="flex items-center gap-1">
-                    {#each getRandomConnectorIcons(org.id, org.prioritizedIntegrations, 'prioritized') as iconUrl}
+                    {#each getRandomConnectorIcons(tenant.id, tenant.prioritizedIntegrations, 'prioritized') as iconUrl}
                       <img 
                         src={iconUrl}
                         alt="Connector icon"
@@ -402,13 +402,13 @@
             <td class="px-6 py-4">
               <div class="flex items-center justify-between">
                 <div>
-                  {#if org.connectedIntegrations > 0}
+                  {#if tenant.connectedIntegrations > 0}
                     <div class="flex items-center gap-2">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
-                      {org.connectedIntegrations}
+                      {tenant.connectedIntegrations}
                     </span>
                       <div class="flex items-center gap-1">
-                        {#each getRandomConnectorIcons(org.id, org.connectedIntegrations, 'active') as iconUrl}
+                        {#each getRandomConnectorIcons(tenant.id, tenant.connectedIntegrations, 'active') as iconUrl}
                           <img 
                             src={iconUrl}
                             alt="Connector icon"
@@ -424,13 +424,13 @@
                 </div>
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    on:click|stopPropagation={() => startOnboarding(org.name)}
+                    on:click|stopPropagation={() => startOnboarding(tenant.name)}
                     class="px-3 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
                   >
                     Start Onboarding
                   </button>
                   <button
-                    on:click|stopPropagation={() => confirmDeleteOrg(org.id)}
+                    on:click|stopPropagation={() => confirmDeleteOrg(tenant.id)}
                     class="px-3 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                   >
                     Delete
@@ -439,10 +439,10 @@
               </div>
             </td>
           </tr>
-          {#if expandedOrg === org.id}
+          {#if expandedOrg === tenant.id}
             <tr>
               <td colspan="4" class="px-6 py-4 bg-gray-50 dark:bg-gray-900">
-                <Tabs.Root bind:value={activeTab[org.id]} class="w-full">
+                <Tabs.Root bind:value={activeTab[tenant.id]} class="w-full">
                   <Tabs.List class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
                     <Tabs.Trigger 
                       value="users"
@@ -466,7 +466,7 @@
                         <div class="relative flex-1">
                         <input
                           type="text"
-                          bind:value={userSearchQuery[org.id]}
+                          bind:value={userSearchQuery[tenant.id]}
                           placeholder="Search users..."
                           class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -510,7 +510,7 @@
                             </tr>
                           </thead>
                           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {#each getFilteredUsers(org) as user}
+                            {#each getFilteredUsers(tenant) as user}
                               <tr class="group">
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{user.name}</td>
                                 <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
@@ -520,7 +520,7 @@
                                     value={user.parableRole}
                                     on:change={(e) => {
                                       const target = e.currentTarget;
-                                      updateUserRole(org.id, user.email, target.value);
+                                      updateUserRole(tenant.id, user.email, target.value);
                                     }}
                                     on:click|stopPropagation
                                     class="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -535,7 +535,7 @@
                                 </td>
                                 <td class="px-4 py-2 text-right">
                                   <button
-                                    on:click|stopPropagation={() => openEditUser(org.id, user)}
+                                    on:click|stopPropagation={() => openEditUser(tenant.id, user)}
                                     class="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-all opacity-0 group-hover:opacity-100"
                                   >
                                     Edit
@@ -556,7 +556,7 @@
                       <div class="relative">
                         <input
                           type="text"
-                          bind:value={pluginSearchQuery[org.id]}
+                          bind:value={pluginSearchQuery[tenant.id]}
                           placeholder="Search plugins..."
                           class="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -584,8 +584,8 @@
                             </tr>
                           </thead>
                           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {#each getFilteredPlugins(org) as plugin}
-                              {@const hoverId = `${org.id}-${plugin.id}`}
+                            {#each getFilteredPlugins(tenant) as plugin}
+                              {@const hoverId = `${tenant.id}-${plugin.id}`}
                               <tr class="group">
                                 <td class="px-4 py-2">
                                   <div class="flex items-center gap-2">
@@ -615,20 +615,20 @@
                                 <td class="px-4 py-2 text-right">
                                   <div class="flex items-center justify-end gap-2">
                                     <button
-                                      on:click|stopPropagation={() => togglePrioritize(org.id, plugin.id)}
+                                      on:click|stopPropagation={() => togglePrioritize(tenant.id, plugin.id)}
                                       class="px-2 py-1 text-xs font-medium rounded transition-all {plugin.prioritized ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100'}"
                                     >
                                       {plugin.prioritized ? '★ Prioritized' : 'Prioritize'}
                                     </button>
                                     <button
-                                      on:click|stopPropagation={() => openDueDateModal(org.id, plugin.id, plugin.name)}
+                                      on:click|stopPropagation={() => openDueDateModal(tenant.id, plugin.id, plugin.name)}
                                       class="px-2 py-1 text-xs font-medium rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in"
                                     >
                                       📅 Set Due Date
                                     </button>
                                     {#if plugin.prioritized}
                                       <button
-                                        on:click|stopPropagation={() => sendNudge(org.name, plugin.name)}
+                                        on:click|stopPropagation={() => sendNudge(tenant.name, plugin.name)}
                                         class="px-2 py-1 text-xs font-medium rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in"
                                       >
                                         📧 Nudge
@@ -653,21 +653,21 @@
   </div>
 </div>
 
-<!-- Add Organization Modal -->
-{#if showAddOrgModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" on:click={() => showAddOrgModal = false}>
+<!-- Add Tenant Modal -->
+{#if showAddTenantModal}
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" on:click={() => showAddTenantModal = false}>
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4" on:click|stopPropagation>
-      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Add Organization</h3>
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Add Tenant</h3>
       
       <!-- Logo Preview -->
       {#if logoPreviewUrl}
         <div class="flex justify-center mb-6">
           <img 
             src={logoPreviewUrl} 
-            alt="Organization logo preview" 
+            alt="Tenant logo preview" 
             class="w-24 h-24 rounded-lg object-contain bg-white p-2 border-2 border-gray-200 dark:border-gray-600"
             on:error={(e) => {
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(newOrgName || 'Org')}&background=random&size=128`;
+              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(newTenantName || 'Org')}&background=random&size=128`;
             }}
           />
         </div>
@@ -676,11 +676,11 @@
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Organization Name
+            Tenant Name
           </label>
           <input
             type="text"
-            bind:value={newOrgName}
+            bind:value={newTenantName}
             placeholder="e.g., Acme Corporation"
             class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -688,11 +688,11 @@
         
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Organization Website
+            Tenant Website
           </label>
           <input
             type="text"
-            bind:value={newOrgWebsite}
+            bind:value={newTenantWebsite}
             placeholder="acme.com"
             class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -700,12 +700,12 @@
         
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Organization Slug
+            Tenant Slug
           </label>
           <div class="flex items-center gap-2">
             <input
               type="text"
-              bind:value={newOrgSlug}
+              bind:value={newTenantSlug}
               placeholder="acme"
               class="flex-1 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -716,43 +716,43 @@
       
       <div class="flex gap-3 mt-6">
         <button
-          on:click={() => showAddOrgModal = false}
+          on:click={() => showAddTenantModal = false}
           class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           Cancel
         </button>
         <button
-          on:click={addOrganization}
-          disabled={!newOrgName || !newOrgWebsite || !newOrgSlug}
+          on:click={addTenant}
+          disabled={!newTenantName || !newTenantWebsite || !newTenantSlug}
           class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Add Organization
+          Add Tenant
         </button>
       </div>
     </div>
   </div>
 {/if}
 
-<!-- Delete Organization Confirmation Modal -->
+<!-- Delete Tenant Confirmation Modal -->
 {#if showDeleteConfirm}
-  {@const orgToDelete = localOrganizations.find(o => o.id === showDeleteConfirm)}
-  {#if orgToDelete}
+  {@const tenantToDelete = localTenants.find(o => o.id === showDeleteConfirm)}
+  {#if tenantToDelete}
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" on:click={() => { showDeleteConfirm = null; deleteConfirmText = ''; }}>
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4" on:click|stopPropagation>
-        <h3 class="text-xl font-bold text-red-600 dark:text-red-400 mb-4">Delete Organization</h3>
+        <h3 class="text-xl font-bold text-red-600 dark:text-red-400 mb-4">Delete Tenant</h3>
         
         <p class="text-gray-700 dark:text-gray-300 mb-4">
-          Are you sure you want to delete <strong>{orgToDelete.name}</strong>? This action cannot be undone.
+          Are you sure you want to delete <strong>{tenantToDelete.name}</strong>? This action cannot be undone.
         </p>
         
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          Type <strong class="text-gray-900 dark:text-white">DELETE {orgToDelete.name.toUpperCase()}</strong> to confirm:
+          Type <strong class="text-gray-900 dark:text-white">DELETE {tenantToDelete.name.toUpperCase()}</strong> to confirm:
         </p>
         
         <input
           type="text"
           bind:value={deleteConfirmText}
-          placeholder="DELETE {orgToDelete.name.toUpperCase()}"
+          placeholder="DELETE {tenantToDelete.name.toUpperCase()}"
           class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 mb-4"
         />
         
@@ -764,11 +764,11 @@
             Cancel
           </button>
           <button
-            on:click={() => deleteOrganization(orgToDelete.id, orgToDelete.name)}
-            disabled={deleteConfirmText !== `DELETE ${orgToDelete.name.toUpperCase()}`}
+            on:click={() => deleteTenant(tenantToDelete.id, tenantToDelete.name)}
+            disabled={deleteConfirmText !== `DELETE ${tenantToDelete.name.toUpperCase()}`}
             class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Delete Organization
+            Delete Tenant
           </button>
         </div>
       </div>

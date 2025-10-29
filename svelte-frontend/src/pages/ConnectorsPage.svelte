@@ -3,22 +3,22 @@
   import IntegrationFormCard from '../components/IntegrationFormCard.svelte';
   import CompanyAnnouncementPane from '../components/CompanyAnnouncementPane.svelte';
   import { selectedConnector } from '../stores/connectorStore';
-  import { organizations } from '../data/organizations';
+  import { tenants } from '../data/tenants';
   import { connectors } from '../data/connectors';
   
   let showList = true;
   
-  // Get the first organization for demo purposes (in production, this would be the current user's org)
-  const currentOrg = organizations[0];
-  const sponsors = currentOrg.users.filter(user => user.parableRole === 'sponsor');
+  // Get the first tenant for demo purposes (in production, this would be the current user's tenant)
+  const currentTenant = tenants[0];
+  const sponsors = currentTenant.users.filter(user => user.parableRole === 'sponsor');
   
   // Find specific roles for blocking users
-  const headOfAI = currentOrg.users.find(u => u.jobTitle.toLowerCase().includes('head of ai')) || 
-                   currentOrg.users.find(u => u.jobTitle.toLowerCase().includes('cto')) ||
+  const headOfAI = currentTenant.users.find(u => u.jobTitle.toLowerCase().includes('head of ai')) || 
+                   currentTenant.users.find(u => u.jobTitle.toLowerCase().includes('cto')) ||
                    sponsors[0] || null;
-  const directorOfIT = currentOrg.users.find(u => u.jobTitle.toLowerCase().includes('director of it')) ||
-                       currentOrg.users.find(u => u.jobTitle.toLowerCase().includes('director')) ||
-                       currentOrg.users.find(u => u.parableRole === 'integrator') || null;
+  const directorOfIT = currentTenant.users.find(u => u.jobTitle.toLowerCase().includes('director of it')) ||
+                       currentTenant.users.find(u => u.jobTitle.toLowerCase().includes('director')) ||
+                       currentTenant.users.find(u => u.parableRole === 'integrator') || null;
   
   // Check if there are any prioritized connections
   $: hasPrioritizedConnections = connectors.some(c => c.prioritized && !c.connected);
@@ -59,8 +59,8 @@
     
     {#if showList}
       <CompanyAnnouncementPane 
-        organizationName={currentOrg.name} 
-        organizationDomain={currentOrg.domain}
+        tenantName={currentTenant.name} 
+        tenantDomain={currentTenant.domain}
         sponsors={sponsors} 
         hasPrioritizedConnections={hasPrioritizedConnections}
         headOfAI={headOfAI}

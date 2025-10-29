@@ -1,4 +1,4 @@
-export interface OrganizationUser {
+export interface TenantUser {
   name: string;
   email: string;
   parableRole: 'sponsor' | 'integrator' | 'project-manager';
@@ -6,7 +6,7 @@ export interface OrganizationUser {
   lastSeen: string;
 }
 
-export interface OrganizationPlugin {
+export interface TenantPlugin {
   id: string;
   name: string;
   icon: string;
@@ -15,17 +15,17 @@ export interface OrganizationPlugin {
   nextNudgeDate: string | null;
 }
 
-export interface Organization {
+export interface Tenant {
   id: string;
   name: string;
   domain: string;
-  users: OrganizationUser[];
-  plugins: OrganizationPlugin[];
+  users: TenantUser[];
+  plugins: TenantPlugin[];
   prioritizedIntegrations: number;
   connectedIntegrations: number;
 }
 
-export const organizations: Organization[] = [
+export const tenants: Tenant[] = [
   {
     id: '1',
     name: 'Nike',
@@ -200,3 +200,4 @@ export const organizations: Organization[] = [
     connectedIntegrations: 4,
   },
 ];
+

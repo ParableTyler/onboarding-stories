@@ -1,8 +1,8 @@
 <script lang="ts">
   import CompanyAnnouncementDialog from './CompanyAnnouncementDialog.svelte';
   
-  export let organizationName: string = 'Acme Corp';
-  export let organizationDomain: string = 'acme.com';
+  export let tenantName: string = 'Acme Corp';
+  export let tenantDomain: string = 'acme.com';
   export let sponsors: Array<{ name: string; jobTitle: string }> = [];
   export let hasPrioritizedConnections: boolean = false;
   export let headOfAI: { name: string; jobTitle: string } | null = null;
@@ -21,7 +21,7 @@
   
   function handleLogoError(e: Event) {
     const img = e.currentTarget as HTMLImageElement;
-    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(organizationName)}&background=random&size=128`;
+    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tenantName)}&background=random&size=128`;
   }
 </script>
 
@@ -31,14 +31,14 @@
     <div class="px-6 py-4 border-b border-purple-200 dark:border-purple-800">
       <div class="flex items-center gap-4">
         <img 
-          src="https://img.logo.dev/{organizationDomain}?token=pk_N2gy3fJKQ0aldg9QTg7cHA" 
-          alt="{organizationName} logo" 
+          src="https://img.logo.dev/{tenantDomain}?token=pk_N2gy3fJKQ0aldg9QTg7cHA" 
+          alt="{tenantName} logo" 
           class="w-12 h-12 rounded-lg object-contain bg-white p-1.5 border border-gray-200 flex-shrink-0"
           on:error={handleLogoError}
         />
         <div class="flex-1">
             <div class="font-semibold text-gray-900 dark:text-white">
-            {organizationName}'s Progress to Parable
+            {tenantName}'s Progress to Parable
           </div>
           <div class="text-sm text-gray-600 dark:text-gray-400">
             Nike leadership has greenlit Parable. Only one step left.
@@ -229,7 +229,7 @@
                 {#if !hasPrioritizedConnections}
                   All critical integrations have been successfully configured and connected. The platform is fully operational and ready to deliver insights.
                 {:else}
-                  Connect all prioritized integrations to complete the deployment. Each integration is essential for comprehensive visibility into your organization's workflows.
+                  Connect all prioritized integrations to complete the deployment. Each integration is essential for comprehensive visibility into your tenant's workflows.
                 {/if}
               </p>
               {#if hasPrioritizedConnections && directorOfIT}
@@ -256,7 +256,7 @@
 <!-- Company Announcement Dialog -->
 <CompanyAnnouncementDialog 
   bind:isOpen={isDialogOpen}
-  organizationName={organizationName}
+  tenantName={tenantName}
   on:close={() => isDialogOpen = false}
   on:sent={handleSent}
 />

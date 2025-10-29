@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   
   export let isOpen = false;
-  export let organizationName: string = 'Acme Corp';
+  export let tenantName: string = 'Acme Corp';
   
   const dispatch = createEventDispatcher<{
     close: void;
@@ -151,7 +151,7 @@ Thanks for your support.
             <input
               type="text"
               bind:value={emailAddresses}
-              placeholder="announcements@{organizationName.toLowerCase().replace(/\s+/g, '')}.com, devops@{organizationName.toLowerCase().replace(/\s+/g, '')}.com"
+              placeholder="announcements@{tenantName.toLowerCase().replace(/\s+/g, '')}.com, devops@{tenantName.toLowerCase().replace(/\s+/g, '')}.com"
               class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
